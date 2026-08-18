@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Product Barcode Scanner</title>
+
+  <!--
+    This loads the html5-qrcode barcode scanner library.
+  -->
+  <script
+    src="https://unpkg.com/html5-qrcode"
+    type="text/javascript">
+  </script>
+
+  <style>
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f3f4f6;
+      color: #1f2937;
+    }
+
+    .header {
+      background: #202124;
+      color: white;
+      padding: 18px;
+      text-align: center;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 22px;
+    }
+
+    .header p {
+      margin: 5px 0 0;
+      font-size: 13px;
+      opacity: .8;
+    }
+
+    .container {
+      max-width: 650px;
+      margin: auto;
+      padding: 16px;
+    }
+
+    .panel {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 6px rgba(0,0,0,.08);
+    }
+
+    #reader {
+      width: 100%;
+    }
+
+    .result {
+      font-size: 22px;
+      font-weight: bold;
+      text-align: center;
+      padding: 16px;
+      background: #f3f4f6;
+      border-radius: 8px;
+      margin-top: 14px;
+      word-break: break-all;
+    }
+
+    .label {
+      font-size: 13px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      font-size: 18px;
+      border: 1px solid #bbb;
+      border-radius: 8px;
+    }
+
+    button {
+      width: 100%;
+      border: none;
+      padding: 13px;
+      border-radius: 8px;
+      margin-top: 10px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .primary {
+      background: #202124;
+      color: white;
+    }
+
+    .secondary {
+      background: #e5e7eb;
+      color: #222;
+    }
+
+    .success {
+      background: #166534;
+      color: white;
+    }
+
+    .message {
+      margin-top: 12px;
+      padding: 10px;
+      border-radius: 8px;
+      display: none;
+    }
+
+    .message.show {
+      display: block;
+    }
+
+    .message.good {
+      background: #dcfce7;
+      color: #14532d;
+    }
+
+    .message.bad {
+      background: #fee2e2;
+      color: #7f1d1d;
+    }
+
+  </style>
+
+</head>
+
+<body>
+
+  <div class="header">
+
+    <h1>Product Barcode Scanner</h1>
+
+    <p>
+      Product Locator Prototype
+    </p>
+
+  </div>
+
+
+  <div class="container">
+
+
+    <div class="panel">
+
+      <h2>
+        Scan Barcode
+      </h2>
+
+      <div
+        id="reader">
+      </div>
+
+      <div
+        id="scanResult"
+        class="result">
+        No barcode scanned
+      </div>
+
+      <button
+        id="startButton"
+        class="primary"
+        onclick="startScanner()">
+        Start Camera
+      </button>
+
+      <button
+        id="stopButton"
+        class="secondary"
+        onclick="stopScanner()">
+        Stop Camera
+      </button>
+
+      <div
+        id="scanMessage"
+        class="message">
+      </div>
+
+    </div>
+
+
+    <div class="panel">
+
+      <h3>
+        Manual Entry
+      </h3>
+
+      <div class="label">
+        UPC / PLU
+      </div>
+
+      <input
+        id="manualCode"
+        type="text"
+        inputmode="numeric"
+        placeholder="Enter code manually..."
+      >
+
+      <button
+        class="success"
+        onclick="useManualCode()">
+        Use Code
+      </button>
+
+    </div>
+
+
+  </div>
+
+
+  <script>
+
+    /*
+     * APP STATE
+     *
+     * These variables are at the far left because
+     * they are not inside another function.
+     */
+
+    let scanner = null;
+
+    let scannerRunning = false;
+
+    let lastScannedCode = "";
+
+
+    /*
+     * START CAMERA
+     */
+
+    function startScanner() {
+
+      if (scannerRunning) {
+
+        return;
+
+      }
+
+
+      scanner =
+        new Html5Qrcode("reader");
+
+
+      const config = {
+
+        fps: 10,
+
+        qrbox: {
+          width: 300,
+          height: 160
+        },
+
+        formatsToSupport: [
+
+          Html5QrcodeSupportedFormats.UPC_A,
+
+          Html5QrcodeSupportedFormats.UPC_E,
+
+          Html5QrcodeSupportedFormats.EAN_13,
+
+          Html5QrcodeSupportedFormats.EAN_8,
+
+          Html5QrcodeSupportedFormats.CODE_128
+
+        ]
+
+      };
+
+
+      scanner
+        .start(
+
+          {
+            facingMode: "environment"
+          },
+
+          config,
+
+          onScanSuccess,
+
+          onScanFailure
+
+        )
+
+        .then(function() {
+
+          scannerRunning =
+            true;
+
+
+          showMessage(
+            "Camera started. Point it at a barcode.",
+            "good"
+          );
+
+        })
+
+        .catch(function(error) {
+
+          scannerRunning =
+            false;
+
+
+          showMessage(
+            "Unable to start camera: " +
+            getErrorMessage(error),
+            "bad"
+          );
+
+        });
+
+    }
+
+
+    /*
+     * SUCCESSFUL BARCODE SCAN
+     */
+
+    function onScanSuccess(
+      decodedText,
+      decodedResult
+    ) {
+
+      const code =
+        String(decodedText || "")
+          .trim();
+
+
+      if (!code) {
+
+        return;
+
+      }
+
+
+      /*
+       * Prevent the exact same barcode from
+       * firing over and over every camera frame.
+       */
+
+      if (
+        code === lastScannedCode
+      ) {
+
+        return;
+
+      }
+
+
+      lastScannedCode =
+        code;
+
+
+      document
+        .getElementById("scanResult")
+        .innerText =
+        code;
+
+
+      document
+        .getElementById("manualCode")
+        .value =
+        code;
+
+
+      showMessage(
+        "Barcode scanned successfully.",
+        "good"
+      );
+
+
+      /*
+       * Later we will put our backend lookup here.
+       *
+       * For now, scanning stops here so we can prove
+       * the camera/barcode system works first.
+       */
+
+      console.log(
+        "Scanned barcode:",
+        code
+      );
+
+    }
+
+
+    /*
+     * SCAN FAILURE
+     *
+     * This runs constantly while the camera is
+     * looking but has not decoded anything yet.
+     *
+     * We intentionally do nothing here.
+     */
+
+    function onScanFailure(error) {
+
+      // No action needed.
+
+    }
+
+
+    /*
+     * STOP CAMERA
+     */
+
+    function stopScanner() {
+
+      if (
+        !scanner ||
+        !scannerRunning
+      ) {
+
+        return;
+
+      }
+
+
+      scanner
+        .stop()
+
+        .then(function() {
+
+          scannerRunning =
+            false;
+
+
+          showMessage(
+            "Camera stopped.",
+            "good"
+          );
+
+        })
+
+        .catch(function(error) {
+
+          showMessage(
+            "Unable to stop camera: " +
+            getErrorMessage(error),
+            "bad"
+          );
+
+        });
+
+    }
+
+
+    /*
+     * MANUAL CODE ENTRY
+     */
+
+    function useManualCode() {
+
+      const code =
+        document
+          .getElementById("manualCode")
+          .value
+          .trim();
+
+
+      if (!code) {
+
+        showMessage(
+          "Enter a UPC / PLU first.",
+          "bad"
+        );
+
+        return;
+
+      }
+
+
+      lastScannedCode =
+        code;
+
+
+      document
+        .getElementById("scanResult")
+        .innerText =
+        code;
+
+
+      showMessage(
+        "Code entered manually.",
+        "good"
+      );
+
+
+      console.log(
+        "Manual barcode:",
+        code
+      );
+
+    }
+
+
+    /*
+     * HELPER FUNCTIONS
+     *
+     * Notice these functions all line up.
+     * None of them is inside another function.
+     */
+
+    function showMessage(
+      text,
+      type
+    ) {
+
+      const element =
+        document
+          .getElementById("scanMessage");
+
+
+      element.innerText =
+        text || "";
+
+
+      element.className =
+        "message show " +
+        type;
+
+    }
+
+
+    function getErrorMessage(error) {
+
+      if (!error) {
+
+        return "Unknown error.";
+
+      }
+
+
+      return (
+        error.message ||
+        error.toString() ||
+        "Unknown error."
+      );
+
+    }
+
+  </script>
+
+</body>
+</html>
