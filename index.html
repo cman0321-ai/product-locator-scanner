@@ -148,7 +148,7 @@
 
   <div class="header">
 
-    <h1>Product Barcode Scanner</h1>
+    <h1>Product  Scanner</h1>
 
     <p>
       Product Locator Prototype
@@ -163,7 +163,7 @@
     <div class="panel">
 
       <h2>
-        Scan Barcode
+        Scan 
       </h2>
 
       <div
@@ -173,8 +173,24 @@
       <div
         id="scanResult"
         class="result">
-        No barcode scanned
+        No  scanned
       </div>
+
+      <button
+        id="lookupButton"
+        class="secondary"
+        onclick="openInLookup()"
+        disabled>
+        Open in Product Lookup
+      </button>
+
+      <button
+        id="managerButton"
+        class="success"
+        onclick="openInManager()"
+        disabled>
+        Add / Relocate Product
+      </button>
 
       <button
         id="startButton"
@@ -242,6 +258,8 @@
 
     let lastScannedCode = "";
 
+    const PRODUCT_LOCATOR_URL =
+      "https://script.google.com/macros/s/AKfycbx0CJ0EX81qC2ABidSO7xE_-3H5-nQMLDOFRXEDe65mg-jlQzYvw-GbMRA41yEE1L1O/exec";
 
     /*
      * START CAMERA
@@ -308,7 +326,7 @@
 
 
           showMessage(
-            "Camera started. Point it at a barcode.",
+            "Camera started. Point it at a .",
             "good"
           );
 
@@ -380,6 +398,18 @@
         .getElementById("manualCode")
         .value =
         code;
+
+      
+      document
+        .getElementById("lookupButton")
+        .disabled =
+        false;
+
+
+      document
+        .getElementById("managerButton")
+        .disabled =
+        false;
 
 
       showMessage(
@@ -498,6 +528,17 @@
         .innerText =
         code;
 
+      
+      document
+        .getElementById("lookupButton")
+        .disabled =
+        false;
+
+
+      document
+        .getElementById("managerButton")
+        .disabled =
+        false;
 
       showMessage(
         "Code entered manually.",
@@ -512,6 +553,47 @@
 
     }
 
+    function openInLookup() {
+
+      if (!lastScannedCode) {
+
+        return;
+
+      }
+
+
+    const url =
+      PRODUCT_LOCATOR_URL +
+      "?upc=" +
+      encodeURIComponent(lastScannedCode);
+
+
+    window.location.href =
+      url;
+
+  }
+
+
+  function openInManager() {
+
+    if (!lastScannedCode) {
+
+      return;
+
+    }
+
+
+    const url =
+      PRODUCT_LOCATOR_URL +
+      "?upc=" +
+      encodeURIComponent(lastScannedCode) +
+      "&mode=manager";
+
+
+    window.location.href =
+      url;
+
+  }
 
     /*
      * HELPER FUNCTIONS
